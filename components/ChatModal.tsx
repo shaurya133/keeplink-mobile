@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -12,13 +11,14 @@ import {
   View,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { getToken } from "@/lib/auth";
 import { colors, spacing } from "@/constants/colors";
 
 const BASE_URL =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
-  "http://10.0.2.2:3000";
+  "http://localhost:3000";
 
 interface Message {
   id: string;
@@ -120,17 +120,22 @@ export function ChatModal({ visible, onClose, linkId, linkTitle }: ChatModalProp
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.header}>
           <Text style={styles.heading} numberOfLines={1}>{heading}</Text>
-          <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.closeBtn}>✕</Text>
+          <TouchableOpacity
+            onPress={handleClose}
+            hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+            style={styles.closeBtn}
+          >
+            <Text style={styles.closeBtnText}>✕</Text>
           </TouchableOpacity>
         </View>
 
         <KeyboardAvoidingView
           style={styles.flex}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior="padding"
+          keyboardVerticalOffset={Platform.OS === "android" ? 0 : 0}
         >
           <FlatList
             ref={listRef}
@@ -138,6 +143,7 @@ export function ChatModal({ visible, onClose, linkId, linkTitle }: ChatModalProp
             keyExtractor={(m) => m.id}
             style={styles.messageList}
             contentContainerStyle={styles.messageContent}
+            keyboardShouldPersistTaps="handled"
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
             ListEmptyComponent={
               <Text style={styles.emptyText}>
@@ -166,7 +172,7 @@ export function ChatModal({ visible, onClose, linkId, linkTitle }: ChatModalProp
               onChangeText={setInput}
               placeholder={placeholder}
               placeholderTextColor={colors.textMuted}
-              multiline
+              multiline={false}
               maxLength={1000}
               editable={!loading}
               onSubmitEditing={handleSend}
@@ -202,6 +208,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.divider,
     backgroundColor: colors.surface,
+    minHeight: 52,
   },
   heading: {
     fontSize: 16,
@@ -211,8 +218,12 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   closeBtn: {
-    fontSize: 18,
+    padding: 4,
+  },
+  closeBtnText: {
+    fontSize: 20,
     color: colors.textMuted,
+    lineHeight: 24,
   },
   messageList: { flex: 1 },
   messageContent: {
@@ -260,7 +271,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 2,
     borderTopColor: colors.divider,
     backgroundColor: colors.surface,
-    alignItems: "flex-end",
+    alignItems: "center",
   },
   input: {
     flex: 1,
@@ -271,12 +282,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     fontSize: 15,
     color: colors.text,
-    maxHeight: 100,
+    height: 48,
   },
   sendBtn: {
     backgroundColor: colors.accent,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    height: 48,
     alignItems: "center",
     justifyContent: "center",
   },

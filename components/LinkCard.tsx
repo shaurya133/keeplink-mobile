@@ -1,8 +1,19 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from "react-native";
+import { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Alert,
+  Modal,
+  Pressable,
+} from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { colors, spacing } from "@/constants/colors";
 import type { LinkWithTags } from "@/lib/types";
 import { api } from "@/lib/api";
+import { ReaderModal } from "@/components/ReaderModal";
 
 interface LinkCardProps {
   link: LinkWithTags;
@@ -11,26 +22,33 @@ interface LinkCardProps {
 }
 
 export function LinkCard({ link, onRefresh, onAskAI }: LinkCardProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [readerOpen, setReaderOpen] = useState(false);
+
   async function open() {
     await WebBrowser.openBrowserAsync(link.url);
   }
 
   async function markRead() {
+    setMenuOpen(false);
     await api.markRead(link.id);
     onRefresh();
   }
 
   async function markUnread() {
+    setMenuOpen(false);
     await api.markUnread(link.id);
     onRefresh();
   }
 
   async function archive() {
+    setMenuOpen(false);
     await api.archiveLink(link.id);
     onRefresh();
   }
 
-  async function remove() {
+  function remove() {
+    setMenuOpen(false);
     Alert.alert("Delete link?", link.title ?? link.url, [
       { text: "Cancel", style: "cancel" },
       {
@@ -47,73 +65,121 @@ export function LinkCard({ link, onRefresh, onAskAI }: LinkCardProps) {
   const tags = link.tags.map((t: { tag: import("@/lib/types").Tag }) => t.tag);
 
   return (
-    <TouchableOpacity style={styles.card} onPress={open} activeOpacity={0.85}>
-      <View style={styles.header}>
-        {link.favicon ? (
-          <Image source={{ uri: link.favicon }} style={styles.favicon} />
-        ) : null}
-        <Text style={styles.domain} numberOfLines={1}>
-          {link.domain}
-        </Text>
-        {link.readingTime ? (
-          <Text style={styles.readingTime}>{link.readingTime} min</Text>
-        ) : null}
-      </View>
-
-      <View style={styles.body}>
-        {link.thumbnail ? (
-          <Image source={{ uri: link.thumbnail }} style={styles.thumbnail} />
-        ) : null}
-        <View style={styles.textBlock}>
-          <Text style={styles.title} numberOfLines={2}>
-            {link.title ?? link.url}
-          </Text>
-          {link.description ? (
-            <Text style={styles.description} numberOfLines={2}>
-              {link.description}
-            </Text>
+    <>
+      <TouchableOpacity style={styles.card} onPress={open} activeOpacity={0.85}>
+        <View style={styles.header}>
+          {link.favicon ? (
+            <Image source={{ uri: link.favicon }} style={styles.favicon} />
           ) : null}
-        </View>
-      </View>
-
-      {tags.length > 0 ? (
-        <View style={styles.tags}>
-          {tags.map((tag: import("@/lib/types").Tag) => (
-            <View key={tag.id} style={styles.tag}>
-              <Text style={styles.tagText}>{tag.name}</Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
-
-      <View style={styles.actions}>
-        {link.status === "UNREAD" ? (
-          <TouchableOpacity style={styles.actionBtn} onPress={markRead}>
-            <Text style={styles.actionText}>Mark Read</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.actionBtn} onPress={markUnread}>
-            <Text style={styles.actionText}>Mark Unread</Text>
-          </TouchableOpacity>
-        )}
-        {link.status !== "ARCHIVED" ? (
-          <TouchableOpacity style={styles.actionBtn} onPress={archive}>
-            <Text style={styles.actionText}>Archive</Text>
-          </TouchableOpacity>
-        ) : null}
-        {onAskAI ? (
+          <Text style={styles.domain} numberOfLines={1}>
+            {link.domain}
+          </Text>
+          {link.readingTime ? (
+            <Text style={styles.readingTime}>{link.readingTime} min</Text>
+          ) : null}
           <TouchableOpacity
-            style={[styles.actionBtn, styles.aiBtn]}
-            onPress={() => onAskAI(link.id, link.title ?? link.url)}
+            style={styles.menuBtn}
+            onPress={() => setMenuOpen(true)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={[styles.actionText, styles.aiText]}>Ask AI</Text>
+            <Text style={styles.menuBtnText}>•••</Text>
           </TouchableOpacity>
-        ) : null}
-        <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={remove}>
-          <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+        </View>
+
+        <View style={styles.body}>
+          <View style={styles.thumbnailContainer}>
+            {link.thumbnail ? (
+              <Image source={{ uri: link.thumbnail }} style={styles.thumbnail} />
+            ) : (
+              <View style={styles.thumbnailPlaceholder}>
+                <Text style={styles.thumbnailInitial}>
+                  {(link.domain ?? link.url).replace(/^www\./, "").charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.textBlock}>
+            <Text style={styles.title} numberOfLines={2}>
+              {link.title ?? link.url}
+            </Text>
+            <Text style={styles.description} numberOfLines={1}>
+              {link.description ?? link.domain}
+            </Text>
+            {tags.length > 0 ? (
+              <View style={styles.tags}>
+                {tags.slice(0, 3).map((tag: import("@/lib/types").Tag) => (
+                  <View key={tag.id} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag.name}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </TouchableOpacity>
+
+      <ReaderModal
+        visible={readerOpen}
+        onClose={() => setReaderOpen(false)}
+        linkId={link.id}
+        linkTitle={link.title}
+        linkDomain={link.domain}
+      />
+
+      <Modal
+        visible={menuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuOpen(false)}
+      >
+        <Pressable style={styles.backdrop} onPress={() => setMenuOpen(false)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
+            <Text style={styles.sheetTitle} numberOfLines={1}>
+              {link.title ?? link.url}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.sheetItem}
+              onPress={() => { setMenuOpen(false); setReaderOpen(true); }}
+            >
+              <Text style={[styles.sheetItemText, styles.readerText]}>Read Offline</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.sheetItem} onPress={link.status === "UNREAD" ? markRead : markUnread}>
+              <Text style={styles.sheetItemText}>
+                {link.status === "UNREAD" ? "Mark as Read" : "Mark as Unread"}
+              </Text>
+            </TouchableOpacity>
+
+            {link.status !== "ARCHIVED" ? (
+              <TouchableOpacity style={styles.sheetItem} onPress={archive}>
+                <Text style={styles.sheetItemText}>Archive</Text>
+              </TouchableOpacity>
+            ) : null}
+
+            {onAskAI ? (
+              <TouchableOpacity
+                style={styles.sheetItem}
+                onPress={() => {
+                  setMenuOpen(false);
+                  onAskAI(link.id, link.title ?? link.url);
+                }}
+              >
+                <Text style={[styles.sheetItemText, styles.aiText]}>Ask AI</Text>
+              </TouchableOpacity>
+            ) : null}
+
+            <TouchableOpacity style={[styles.sheetItem, styles.sheetItemLast]} onPress={remove}>
+              <Text style={[styles.sheetItemText, styles.deleteText]}>Delete</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setMenuOpen(false)}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -144,18 +210,45 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
   },
+  menuBtn: {
+    paddingLeft: spacing.sm,
+  },
+  menuBtnText: {
+    fontSize: 14,
+    color: colors.textMuted,
+    letterSpacing: 1,
+    fontWeight: "700",
+  },
   body: {
     flexDirection: "row",
     gap: spacing.md,
+    height: 80,
+  },
+  thumbnailContainer: {
+    width: 72,
+    height: 80,
+    flexShrink: 0,
   },
   thumbnail: {
     width: 72,
-    height: 72,
-    flexShrink: 0,
+    height: 80,
+  },
+  thumbnailPlaceholder: {
+    width: 72,
+    height: 80,
+    backgroundColor: colors.accentLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  thumbnailInitial: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: colors.accent,
   },
   textBlock: {
     flex: 1,
     gap: spacing.xs,
+    overflow: "hidden",
   },
   title: {
     fontSize: 15,
@@ -170,48 +263,78 @@ const styles = StyleSheet.create({
   },
   tags: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    flexWrap: "nowrap",
     gap: spacing.xs,
+    overflow: "hidden",
   },
   tag: {
     backgroundColor: colors.accentLight,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
+    flexShrink: 0,
   },
   tagText: {
     fontSize: 12,
     color: colors.accent,
     fontWeight: "500",
   },
-  actions: {
-    flexDirection: "row",
-    gap: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.divider,
-    paddingTop: spacing.sm,
+  // Action sheet
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
   },
-  actionBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.divider,
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    paddingBottom: spacing.xxxl,
+    overflow: "hidden",
   },
-  actionText: {
-    fontSize: 12,
+  sheetTitle: {
+    fontSize: 13,
     color: colors.textMuted,
     fontWeight: "500",
+    textAlign: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
   },
-  aiBtn: {
-    borderColor: colors.accent,
+  sheetItem: {
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  sheetItemLast: {
+    borderBottomWidth: 0,
+  },
+  sheetItemText: {
+    fontSize: 16,
+    color: colors.text,
+    textAlign: "center",
+  },
+  readerText: {
+    color: colors.text,
+    fontWeight: "600",
   },
   aiText: {
     color: colors.accent,
-  },
-  deleteBtn: {
-    marginLeft: "auto",
-    borderColor: colors.error,
+    fontWeight: "600",
   },
   deleteText: {
     color: colors.error,
+  },
+  cancelBtn: {
+    marginTop: spacing.sm,
+    paddingVertical: spacing.lg,
+    backgroundColor: colors.bg,
+  },
+  cancelText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.text,
+    textAlign: "center",
   },
 });

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   View,
   TextInput,
@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import * as Clipboard from "expo-clipboard";
 import { colors, spacing } from "@/constants/colors";
 
 function isUrl(s: string) {
@@ -27,14 +26,6 @@ export function LinkOmniBar({ onSave }: LinkOmniBarProps) {
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
-
-  // Check clipboard on focus
-  async function handleFocus() {
-    const clip = await Clipboard.getStringAsync();
-    if (clip && isUrl(clip) && clip !== value) {
-      setValue(clip);
-    }
-  }
 
   async function handleSubmit() {
     const url = value.trim();
@@ -62,30 +53,31 @@ export function LinkOmniBar({ onSave }: LinkOmniBarProps) {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Paste a URL to save it here…"
-        placeholderTextColor="#9e9b96"
-        value={value}
-        onChangeText={setValue}
-        onFocus={handleFocus}
-        onSubmitEditing={handleSubmit}
-        returnKeyType="done"
-        autoCapitalize="none"
-        autoCorrect={false}
-        keyboardType="url"
-      />
-      <TouchableOpacity
-        style={[styles.btn, loading && styles.btnDisabled]}
-        onPress={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color={colors.surface} size="small" />
-        ) : (
-          <Text style={styles.btnText}>Save</Text>
-        )}
-      </TouchableOpacity>
+      <View style={styles.row}>
+        <TextInput
+          style={styles.input}
+          placeholder="Paste a URL…"
+          placeholderTextColor={colors.textMuted}
+          value={value}
+          onChangeText={setValue}
+          onSubmitEditing={handleSubmit}
+          returnKeyType="go"
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+        />
+        <TouchableOpacity
+          style={[styles.btn, loading && styles.btnDisabled]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color={colors.surface} size="small" />
+          ) : (
+            <Text style={styles.btnText}>Save</Text>
+          )}
+        </TouchableOpacity>
+      </View>
       {message ? (
         <Text style={[styles.message, !message.ok && styles.messageError]}>
           {message.text}
@@ -107,6 +99,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     gap: spacing.sm,
+    alignItems: "center",
   },
   input: {
     flex: 1,
@@ -114,14 +107,15 @@ const styles = StyleSheet.create({
     borderColor: colors.divider,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    fontSize: 16,
+    fontSize: 15,
     color: colors.text,
     backgroundColor: colors.bg,
+    minHeight: 48,
   },
   btn: {
     backgroundColor: colors.accent,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    width: 80,
+    height: 48,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -129,7 +123,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: colors.surface,
     fontWeight: "600",
-    fontSize: 14,
+    fontSize: 15,
   },
   message: {
     fontSize: 13,

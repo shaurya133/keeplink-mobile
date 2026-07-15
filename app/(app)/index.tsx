@@ -16,6 +16,8 @@ import { FilterTabs } from "@/components/FilterTabs";
 import { LinkOmniBar } from "@/components/LinkOmniBar";
 import { LinkCard } from "@/components/LinkCard";
 import { ChatModal } from "@/components/ChatModal";
+import { HighlightsModal } from "@/components/HighlightsModal";
+import { ReaderModal } from "@/components/ReaderModal";
 import { colors, spacing } from "@/constants/colors";
 import type { LinkWithTags } from "@/lib/types";
 
@@ -28,11 +30,19 @@ export default function LinksScreen() {
   const [chatVisible, setChatVisible] = useState(false);
   const [chatLinkId, setChatLinkId] = useState<string | undefined>();
   const [chatLinkTitle, setChatLinkTitle] = useState<string | undefined>();
+  const [highlightsVisible, setHighlightsVisible] = useState(false);
+  const [readerLinkId, setReaderLinkId] = useState<string | null>(null);
+  const [readerLinkTitle, setReaderLinkTitle] = useState<string | null>(null);
 
   function openChat(linkId?: string, linkTitle?: string) {
     setChatLinkId(linkId);
     setChatLinkTitle(linkTitle);
     setChatVisible(true);
+  }
+
+  function openReaderFromHighlights(linkId: string, linkTitle: string) {
+    setReaderLinkId(linkId);
+    setReaderLinkTitle(linkTitle);
   }
 
   async function fetchLinks(currentStatus = status) {
@@ -82,6 +92,9 @@ export default function LinksScreen() {
       <View style={styles.navBar}>
         <Text style={styles.brand}>KeepLink</Text>
         <View style={styles.navActions}>
+          <TouchableOpacity onPress={() => setHighlightsVisible(true)}>
+            <Text style={styles.highlights}>Highlights</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => openChat()}>
             <Text style={styles.askAI}>Ask AI</Text>
           </TouchableOpacity>
@@ -100,6 +113,21 @@ export default function LinksScreen() {
         linkId={chatLinkId}
         linkTitle={chatLinkTitle}
       />
+
+      <HighlightsModal
+        visible={highlightsVisible}
+        onClose={() => setHighlightsVisible(false)}
+        onOpenReader={openReaderFromHighlights}
+      />
+
+      {readerLinkId && (
+        <ReaderModal
+          visible={readerLinkId !== null}
+          onClose={() => { setReaderLinkId(null); setReaderLinkTitle(null); }}
+          linkId={readerLinkId}
+          linkTitle={readerLinkTitle}
+        />
+      )}
 
       <FlatList
         data={links}
@@ -152,6 +180,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.lg,
+  },
+  highlights: {
+    fontSize: 14,
+    color: colors.textMuted,
+    fontWeight: "600",
   },
   askAI: {
     fontSize: 14,

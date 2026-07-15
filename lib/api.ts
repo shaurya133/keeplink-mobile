@@ -3,7 +3,7 @@ import { getToken } from "./auth";
 
 const BASE_URL =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
-  "http://10.0.2.2:3000";
+  "http://localhost:3000";
 
 async function request<T>(
   path: string,
@@ -91,6 +91,9 @@ export const api = {
       `/api/links/${linkId}/tags?tagId=${tagId}`,
       { method: "DELETE" }
     ),
+
+  getLink: (id: string) =>
+    request<import("./types").LinkWithTags>(`/api/links/${id}`),
 
   getTags: () =>
     request<import("./types").TagWithCount[]>("/api/tags"),

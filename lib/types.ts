@@ -14,6 +14,7 @@ export interface LinkWithTags {
   favicon: string | null;
   domain: string;
   readingTime: number | null;
+  content: string | null;
   status: LinkStatus;
   addedAt: string;
   readAt: string | null;
