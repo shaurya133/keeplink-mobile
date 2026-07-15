@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   FlatList,
   View,
@@ -10,6 +10,8 @@ import {
 import { useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "@/lib/api";
+import { getUserId } from "@/lib/auth";
+import { listCachedLinks } from "@/lib/offline";
 import { router } from "expo-router";
 import { FilterTabs } from "@/components/FilterTabs";
 import { LinkOmniBar } from "@/components/LinkOmniBar";
@@ -18,7 +20,7 @@ import { ChatModal } from "@/components/ChatModal";
 import { HighlightsModal } from "@/components/HighlightsModal";
 import { ReaderModal } from "@/components/ReaderModal";
 import { colors, spacing } from "@/constants/colors";
-import type { LinkWithTags } from "@/lib/types";
+import type { LinkWithTags, CachedLinkMeta } from "@/lib/types";
 
 export default function LinksScreen() {
   const [links, setLinks] = useState<LinkWithTags[]>([]);
@@ -32,6 +34,12 @@ export default function LinksScreen() {
   const [highlightsVisible, setHighlightsVisible] = useState(false);
   const [readerLinkId, setReaderLinkId] = useState<string | null>(null);
   const [readerLinkTitle, setReaderLinkTitle] = useState<string | null>(null);
+  const [userId, setUserIdState] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
+
+  useEffect(() => {
+    getUserId().then(setUserIdState);
+  }, []);
 
   function openChat(linkId?: string, linkTitle?: string) {
     setChatLinkId(linkId);
@@ -45,25 +53,64 @@ export default function LinksScreen() {
   }
 
   async function fetchLinks(currentStatus = status) {
+    if (currentStatus === "saved") {
+      await fetchSavedLinks();
+      return;
+    }
+
     try {
       const data = await api.getLinks({ status: currentStatus });
       setLinks(data);
+      setOffline(false);
+    } catch {
+      setOffline(true);
+      await fetchSavedLinks();
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }
 
-  // Refresh whenever the screen comes into focus (e.g. after share intent saves a link)
+  async function fetchSavedLinks() {
+    if (!userId) {
+      setLinks([]);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+
+    const cached = await listCachedLinks(userId);
+    const asLinks: LinkWithTags[] = cached.map((m: CachedLinkMeta) => ({
+      id: m.id,
+      url: m.url,
+      title: m.title,
+      description: m.description,
+      thumbnail: m.thumbnail,
+      favicon: m.favicon,
+      domain: m.domain,
+      readingTime: m.readingTime,
+      content: null,
+      status: "READ" as const,
+      addedAt: new Date(m.savedAt).toISOString(),
+      readAt: null,
+      archivedAt: null,
+      tags: [],
+    }));
+    setLinks(asLinks);
+    setLoading(false);
+    setRefreshing(false);
+  }
+
   useFocusEffect(
     useCallback(() => {
-      fetchLinks();
-    }, [status])
+      if (userId !== null) fetchLinks();
+    }, [status, userId])
   );
 
   function handleStatusChange(next: string) {
     setStatus(next);
     setLoading(true);
+    if (next !== "saved") setOffline(false);
     fetchLinks(next);
   }
 
@@ -74,12 +121,32 @@ export default function LinksScreen() {
 
   function renderEmpty() {
     if (loading) return null;
+    if (offline && status !== "saved") {
+      return (
+        <View style={styles.empty}>
+          <Text style={styles.emptyText}>
+            You're offline. Switch to the Saved tab to read downloaded articles.
+          </Text>
+        </View>
+      );
+    }
+    if (status === "saved") {
+      return (
+        <View style={styles.empty}>
+          <Text style={styles.emptyText}>
+            No saved articles yet. Open an article and tap ⬇ Save to read it offline.
+          </Text>
+        </View>
+      );
+    }
     return (
       <View style={styles.empty}>
         <Text style={styles.emptyText}>No links here yet.</Text>
       </View>
     );
   }
+
+  const isSavedTab = status === "saved";
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -98,7 +165,14 @@ export default function LinksScreen() {
         </View>
       </View>
 
-      <LinkOmniBar onSave={handleSave} />
+      {!offline && <LinkOmniBar onSave={handleSave} />}
+
+      {offline && status !== "saved" && (
+        <View style={styles.offlineBanner}>
+          <Text style={styles.offlineBannerText}>You're offline</Text>
+        </View>
+      )}
+
       <FilterTabs active={status} onChange={handleStatusChange} />
 
       <ChatModal
@@ -120,6 +194,7 @@ export default function LinksScreen() {
           onClose={() => { setReaderLinkId(null); setReaderLinkTitle(null); }}
           linkId={readerLinkId}
           linkTitle={readerLinkTitle}
+          userId={userId}
         />
       )}
 
@@ -130,7 +205,8 @@ export default function LinksScreen() {
           <LinkCard
             link={item}
             onRefresh={() => fetchLinks()}
-            onAskAI={(id, title) => openChat(id, title)}
+            onAskAI={isSavedTab ? undefined : (id, title) => openChat(id, title)}
+            userId={userId}
           />
         )}
         ListEmptyComponent={renderEmpty}
@@ -189,6 +265,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textMuted,
   },
+  offlineBanner: {
+    backgroundColor: colors.accentLight,
+    paddingVertical: spacing.xs,
+    alignItems: "center",
+  },
+  offlineBannerText: {
+    fontSize: 12,
+    color: colors.accent,
+    fontWeight: "600",
+  },
   empty: {
     flex: 1,
     alignItems: "center",
@@ -200,5 +286,8 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.textMuted,
     fontSize: 15,
+    textAlign: "center",
+    paddingHorizontal: spacing.xxl,
+    lineHeight: 22,
   },
 });

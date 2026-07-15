@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { api } from "@/lib/api";
-import { setToken } from "@/lib/auth";
+import { setToken, setUserId } from "@/lib/auth";
 import { colors, spacing } from "@/constants/colors";
 
 export default function VerifyScreen() {
@@ -31,8 +31,9 @@ export default function VerifyScreen() {
     setError(null);
 
     try {
-      const { token: jwt } = await api.verifyToken(email, trimmed);
+      const { token: jwt, userId } = await api.verifyToken(email, trimmed);
       await setToken(jwt);
+      await setUserId(userId);
       router.replace("/(app)");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Incorrect or expired code.");

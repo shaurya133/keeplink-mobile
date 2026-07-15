@@ -9,7 +9,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { clearToken } from "@/lib/auth";
+import { clearToken, clearUserId, getUserId } from "@/lib/auth";
+import { clearUserCache } from "@/lib/offline";
 import { api } from "@/lib/api";
 import { colors, spacing } from "@/constants/colors";
 
@@ -17,6 +18,9 @@ export default function SettingsScreen() {
   const [deleting, setDeleting] = useState(false);
 
   async function handleSignOut() {
+    const uid = await getUserId();
+    if (uid) await clearUserCache(uid);
+    await clearUserId();
     await clearToken();
     router.replace("/(auth)/login");
   }
@@ -40,6 +44,9 @@ export default function SettingsScreen() {
     setDeleting(true);
     try {
       await api.deleteAccount();
+      const uid = await getUserId();
+      if (uid) await clearUserCache(uid);
+      await clearUserId();
       await clearToken();
       router.replace("/(auth)/login");
     } catch (e: unknown) {

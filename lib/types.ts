@@ -27,3 +27,15 @@ export interface TagWithCount {
   name: string;
   count: number;
 }
+
+export interface CachedLinkMeta {
+  id: string;
+  url: string;
+  title: string | null;
+  description: string | null;
+  thumbnail: string | null;
+  favicon: string | null;
+  domain: string;
+  readingTime: number | null;
+  savedAt: number;
+}

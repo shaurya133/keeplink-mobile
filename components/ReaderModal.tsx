@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "@/lib/api";
 import {
   cacheContent,
+  cacheLinkMeta,
   deleteCache,
   isCached,
   loadContent,
@@ -26,14 +27,13 @@ interface ReaderModalProps {
   linkId: string;
   linkTitle: string | null;
   linkDomain?: string;
+  userId: string | null;
 }
 
 type Status = "loading" | "ready" | "no-content" | "error";
 
-export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain }: ReaderModalProps) {
-  // paragraphs is an array of sentence arrays
+export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain, userId }: ReaderModalProps) {
   const [paragraphs, setParagraphs] = useState<string[][]>([]);
-  // Map<sentence text, highlight id>
   const [highlights, setHighlights] = useState<Map<string, string>>(new Map());
   const [status, setStatus] = useState<Status>("loading");
   const [offline, setOffline] = useState(false);
@@ -50,18 +50,24 @@ export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain }:
     setStatus("loading");
     setParagraphs([]);
 
-    const saved = await api.getHighlights(linkId);
-    setHighlights(new Map(saved.map((h) => [h.text, h.id])));
+    try {
+      const saved = await api.getHighlights(linkId);
+      setHighlights(new Map(saved.map((h) => [h.text, h.id])));
+    } catch {
+      // offline — highlights won't load, that's fine
+    }
 
-    const localContent = await loadContent(linkId);
-    const isAlreadyCached = await isCached(linkId);
-    setCached(isAlreadyCached);
+    if (userId) {
+      const isAlreadyCached = await isCached(userId, linkId);
+      setCached(isAlreadyCached);
 
-    if (localContent) {
-      setParagraphs(splitIntoParagraphs(localContent));
-      setOffline(false);
-      setStatus("ready");
-      return;
+      const localContent = await loadContent(userId, linkId);
+      if (localContent) {
+        setParagraphs(splitIntoParagraphs(localContent));
+        setOffline(false);
+        setStatus("ready");
+        return;
+      }
     }
 
     try {
@@ -80,8 +86,10 @@ export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain }:
   }
 
   async function handleCacheToggle() {
+    if (!userId) return;
+
     if (cached) {
-      await deleteCache(linkId);
+      await deleteCache(userId, linkId);
       setCached(false);
       return;
     }
@@ -89,7 +97,18 @@ export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain }:
     try {
       const link = await api.getLink(linkId);
       if (link.content) {
-        await cacheContent(linkId, link.content);
+        await cacheContent(userId, linkId, link.content);
+        await cacheLinkMeta(userId, linkId, {
+          id: link.id,
+          url: link.url,
+          title: link.title,
+          description: link.description,
+          thumbnail: link.thumbnail,
+          favicon: link.favicon,
+          domain: link.domain,
+          readingTime: link.readingTime,
+          savedAt: Date.now(),
+        });
         setCached(true);
       }
     } finally {
@@ -100,21 +119,17 @@ export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain }:
   async function toggleHighlight(sentence: string) {
     if (highlights.has(sentence)) {
       const id = highlights.get(sentence)!;
-      // Optimistic remove
       setHighlights((prev) => { const next = new Map(prev); next.delete(sentence); return next; });
       api.deleteHighlight(id).catch(() => {
-        // Revert on failure
         setHighlights((prev) => new Map(prev).set(sentence, id));
       });
     } else {
-      // Optimistic add with temp id
       const tempId = `temp_${Date.now()}`;
       setHighlights((prev) => new Map(prev).set(sentence, tempId));
       try {
         const { id } = await api.addHighlight(linkId, sentence);
         setHighlights((prev) => new Map(prev).set(sentence, id));
       } catch {
-        // Revert on failure
         setHighlights((prev) => { const next = new Map(prev); next.delete(sentence); return next; });
       }
     }
@@ -136,7 +151,7 @@ export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain }:
           <Text style={styles.title} numberOfLines={1}>{linkTitle ?? "Article"}</Text>
           <TouchableOpacity
             onPress={handleCacheToggle}
-            disabled={caching || status !== "ready"}
+            disabled={caching || status !== "ready" || !userId}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             {caching ? (

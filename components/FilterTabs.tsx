@@ -6,6 +6,7 @@ const TABS = [
   { label: "Read", value: "read" },
   { label: "Archived", value: "archived" },
   { label: "All", value: "all" },
+  { label: "⬇ Saved", value: "saved" },
 ] as const;
 
 interface FilterTabsProps {

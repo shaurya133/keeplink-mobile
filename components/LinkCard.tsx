@@ -19,9 +19,10 @@ interface LinkCardProps {
   link: LinkWithTags;
   onRefresh: () => void;
   onAskAI?: (linkId: string, linkTitle: string) => void;
+  userId?: string | null;
 }
 
-export function LinkCard({ link, onRefresh, onAskAI }: LinkCardProps) {
+export function LinkCard({ link, onRefresh, onAskAI, userId }: LinkCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [readerOpen, setReaderOpen] = useState(false);
 
@@ -124,6 +125,7 @@ export function LinkCard({ link, onRefresh, onAskAI }: LinkCardProps) {
         linkId={link.id}
         linkTitle={link.title}
         linkDomain={link.domain}
+        userId={userId ?? null}
       />
 
       <Modal

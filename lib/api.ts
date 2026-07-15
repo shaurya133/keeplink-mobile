@@ -36,7 +36,7 @@ export const api = {
     }),
 
   verifyToken: (email: string, code: string) =>
-    request<{ token: string }>("/api/auth/mobile-verify", {
+    request<{ token: string; userId: string }>("/api/auth/mobile-verify", {
       method: "POST",
       body: JSON.stringify({ email, code }),
     }),
