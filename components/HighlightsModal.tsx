@@ -9,7 +9,14 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { loadAllHighlights, type HighlightEntry } from "@/lib/offline";
+import { api } from "@/lib/api";
+
+interface HighlightEntry {
+  linkId: string;
+  title: string;
+  domain: string;
+  highlights: { id: string; text: string }[];
+}
 import { colors, spacing } from "@/constants/colors";
 
 interface HighlightsModalProps {
@@ -25,12 +32,26 @@ export function HighlightsModal({ visible, onClose, onOpenReader }: HighlightsMo
   useEffect(() => {
     if (!visible) return;
     setLoading(true);
-    loadAllHighlights()
-      .then(setEntries)
+    api.getAllHighlights()
+      .then((flat) => {
+        const map = new Map<string, HighlightEntry>();
+        for (const h of flat) {
+          if (!map.has(h.linkId)) {
+            map.set(h.linkId, {
+              linkId: h.linkId,
+              title: h.link.title ?? "",
+              domain: h.link.domain,
+              highlights: [],
+            });
+          }
+          map.get(h.linkId)!.highlights.push({ id: h.id, text: h.text });
+        }
+        setEntries(Array.from(map.values()));
+      })
       .finally(() => setLoading(false));
   }, [visible]);
 
-  const totalCount = entries.reduce((n, e) => n + e.sentences.length, 0);
+  const totalCount = entries.reduce((n, e) => n + e.highlights.length, 0);
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -82,10 +103,10 @@ export function HighlightsModal({ visible, onClose, onOpenReader }: HighlightsMo
                   <Text style={styles.openReader}>Open →</Text>
                 </TouchableOpacity>
 
-                {entry.sentences.map((sentence, i) => (
-                  <View key={i} style={styles.highlightRow}>
+                {entry.highlights.map((h) => (
+                  <View key={h.id} style={styles.highlightRow}>
                     <View style={styles.highlightBar} />
-                    <Text style={styles.highlightText}>{sentence}</Text>
+                    <Text style={styles.highlightText}>{h.text}</Text>
                   </View>
                 ))}
               </View>

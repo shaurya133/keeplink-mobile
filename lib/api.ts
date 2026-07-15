@@ -100,4 +100,21 @@ export const api = {
 
   deleteAccount: () =>
     request<{ ok: boolean }>("/api/account", { method: "DELETE" }),
+
+  getHighlights: (linkId: string) =>
+    request<{ id: string; text: string }[]>(`/api/highlights?linkId=${linkId}`),
+
+  getAllHighlights: () =>
+    request<{ id: string; text: string; linkId: string; link: { title: string | null; domain: string } }[]>(
+      "/api/highlights"
+    ),
+
+  addHighlight: (linkId: string, text: string) =>
+    request<{ id: string; text: string }>("/api/highlights", {
+      method: "POST",
+      body: JSON.stringify({ linkId, text }),
+    }),
+
+  deleteHighlight: (id: string) =>
+    request<{ ok: boolean }>(`/api/highlights/${id}`, { method: "DELETE" }),
 };

@@ -16,8 +16,6 @@ import {
   deleteCache,
   isCached,
   loadContent,
-  loadHighlights,
-  saveHighlights,
   splitIntoParagraphs,
 } from "@/lib/offline";
 import { colors, spacing } from "@/constants/colors";
@@ -35,7 +33,8 @@ type Status = "loading" | "ready" | "no-content" | "error";
 export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain }: ReaderModalProps) {
   // paragraphs is an array of sentence arrays
   const [paragraphs, setParagraphs] = useState<string[][]>([]);
-  const [highlights, setHighlights] = useState<Set<string>>(new Set());
+  // Map<sentence text, highlight id>
+  const [highlights, setHighlights] = useState<Map<string, string>>(new Map());
   const [status, setStatus] = useState<Status>("loading");
   const [offline, setOffline] = useState(false);
   const [cached, setCached] = useState(false);
@@ -51,8 +50,8 @@ export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain }:
     setStatus("loading");
     setParagraphs([]);
 
-    const saved = await loadHighlights(linkId);
-    setHighlights(new Set(saved));
+    const saved = await api.getHighlights(linkId);
+    setHighlights(new Map(saved.map((h) => [h.text, h.id])));
 
     const localContent = await loadContent(linkId);
     const isAlreadyCached = await isCached(linkId);
@@ -99,16 +98,26 @@ export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain }:
   }
 
   async function toggleHighlight(sentence: string) {
-    setHighlights((prev) => {
-      const next = new Set(prev);
-      if (next.has(sentence)) {
-        next.delete(sentence);
-      } else {
-        next.add(sentence);
+    if (highlights.has(sentence)) {
+      const id = highlights.get(sentence)!;
+      // Optimistic remove
+      setHighlights((prev) => { const next = new Map(prev); next.delete(sentence); return next; });
+      api.deleteHighlight(id).catch(() => {
+        // Revert on failure
+        setHighlights((prev) => new Map(prev).set(sentence, id));
+      });
+    } else {
+      // Optimistic add with temp id
+      const tempId = `temp_${Date.now()}`;
+      setHighlights((prev) => new Map(prev).set(sentence, tempId));
+      try {
+        const { id } = await api.addHighlight(linkId, sentence);
+        setHighlights((prev) => new Map(prev).set(sentence, id));
+      } catch {
+        // Revert on failure
+        setHighlights((prev) => { const next = new Map(prev); next.delete(sentence); return next; });
       }
-      saveHighlights(linkId, Array.from(next), { title: linkTitle, domain: linkDomain ?? "" });
-      return next;
-    });
+    }
   }
 
   function handleClose() {
@@ -199,7 +208,7 @@ export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain }:
               {highlights.size > 0 && (
                 <View style={styles.highlightsSection}>
                   <Text style={styles.highlightsSectionTitle}>Your Highlights</Text>
-                  {Array.from(highlights).map((h, i) => (
+                  {Array.from(highlights.keys()).map((h, i) => (
                     <Pressable key={i} style={styles.highlightCard} onPress={() => toggleHighlight(h)}>
                       <Text style={styles.highlightText}>{h}</Text>
                       <Text style={styles.removeHighlight}>Hold to remove</Text>
