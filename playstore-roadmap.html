@@ -1,0 +1,610 @@
+
+<title>KeepLink — Play Store Submission Roadmap</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --accent:       #9c5640;
+    --accent-light: #f0e8e5;
+    --ground:       #f4f3f1;
+    --surface:      #ffffff;
+    --ink:          #1a1917;
+    --ink-muted:    #6b6760;
+    --divider:      #e0deda;
+    --chip-bg:      #ede9e7;
+    --warn:         #b45309;
+    --warn-bg:      #fef3c7;
+    --ok:           #166534;
+    --ok-bg:        #dcfce7;
+    --phase-num:    rgba(156,86,64,.07);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:      #141210;
+      --surface:     #1e1b18;
+      --ink:         #ede9e5;
+      --ink-muted:   #948f8a;
+      --divider:     #2d2926;
+      --chip-bg:     #28241f;
+      --warn-bg:     #2d1e04;
+      --warn:        #fbbf24;
+      --ok-bg:       #052e16;
+      --ok:          #86efac;
+      --phase-num:   rgba(156,86,64,.12);
+    }
+  }
+
+  :root[data-theme="light"] {
+    --ground:      #f4f3f1;
+    --surface:     #ffffff;
+    --ink:         #1a1917;
+    --ink-muted:   #6b6760;
+    --divider:     #e0deda;
+    --chip-bg:     #ede9e7;
+    --warn-bg:     #fef3c7;
+    --warn:        #b45309;
+    --ok-bg:       #dcfce7;
+    --ok:          #166534;
+    --phase-num:   rgba(156,86,64,.07);
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #141210;
+    --surface:     #1e1b18;
+    --ink:         #ede9e5;
+    --ink-muted:   #948f8a;
+    --divider:     #2d2926;
+    --chip-bg:     #28241f;
+    --warn-bg:     #2d1e04;
+    --warn:        #fbbf24;
+    --ok-bg:       #052e16;
+    --ok:          #86efac;
+    --phase-num:   rgba(156,86,64,.12);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 48px 24px 80px;
+  }
+
+  .page {
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ── Header ── */
+  .header {
+    padding-bottom: 28px;
+    border-bottom: 2px solid var(--divider);
+    margin-bottom: 8px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .brand-dot {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .brand-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin-bottom: 10px;
+  }
+
+  .header-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 9px;
+    background: var(--chip-bg);
+    color: var(--ink-muted);
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+
+  .chip.warn  { background: var(--warn-bg);  color: var(--warn); }
+  .chip.ok    { background: var(--ok-bg);    color: var(--ok);   }
+  .chip.accent { background: var(--accent-light); color: var(--accent); }
+
+  /* ── Callout ── */
+  .callout {
+    background: var(--warn-bg);
+    border-left: 3px solid var(--warn);
+    padding: 14px 16px;
+    border-radius: 0 4px 4px 0;
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.55;
+  }
+
+  .callout strong { color: var(--warn); }
+
+  /* ── Phase cards ── */
+  .phase {
+    background: var(--surface);
+    border: 1.5px solid var(--divider);
+    border-left: 3px solid var(--accent);
+    padding: 22px 24px 22px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .phase-num-bg {
+    position: absolute;
+    top: -10px;
+    right: 14px;
+    font-size: 80px;
+    font-weight: 900;
+    color: var(--phase-num);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+    letter-spacing: -.04em;
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .phase-title-group { flex: 1; }
+
+  .phase-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .phase-title {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-wrap: balance;
+  }
+
+  .phase-chips {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .tasks {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tasks li {
+    display: flex;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  .tasks li::before {
+    content: "–";
+    color: var(--accent);
+    flex-shrink: 0;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+
+  .tasks li em {
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  .tasks li .note {
+    color: var(--ink-muted);
+    font-size: 13px;
+    display: block;
+  }
+
+  /* ── Code snippets ── */
+  .cmd-block {
+    margin-top: 12px;
+    background: var(--ground);
+    border: 1px solid var(--divider);
+    border-radius: 4px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-x: auto;
+  }
+
+  .cmd {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .cmd .prompt { color: var(--ink-muted); user-select: none; }
+  .cmd .highlight { color: var(--accent); font-weight: 600; }
+
+  /* ── Timeline summary ── */
+  .timeline {
+    background: var(--surface);
+    border: 1.5px solid var(--divider);
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .timeline-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 14px;
+  }
+
+  .timeline-row {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: 8px 16px;
+    align-items: baseline;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--divider);
+    font-size: 13.5px;
+  }
+
+  .timeline-row:last-child { border-bottom: none; }
+
+  .timeline-phase { color: var(--accent); font-weight: 600; }
+  .timeline-label { color: var(--ink); }
+  .timeline-dur {
+    color: var(--ink-muted);
+    font-size: 12px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 12px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+    border-top: 2px solid var(--divider);
+    margin-top: 4px;
+  }
+
+  /* ── Section divider label ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    padding: 14px 0 4px;
+  }
+
+  @media (max-width: 540px) {
+    .timeline-row { grid-template-columns: 1fr auto; }
+    .timeline-phase { display: none; }
+    .phase-header { flex-direction: column; gap: 8px; }
+    .phase-chips { justify-content: flex-start; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="header">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <span class="brand-name">KeepLink</span>
+    </div>
+    <h1>Play Store Submission Roadmap</h1>
+    <div class="header-meta">
+      <span class="chip accent">Expo SDK 57 · React Native</span>
+      <span class="chip">~2–3 weeks total</span>
+      <span class="chip warn">$25 one-time developer fee</span>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Critical blocker:</strong> The app currently hardcodes <code>10.0.2.2:3000</code> (emulator localhost). Before any real-device or store testing, <code>app.json</code> must point to your Railway production URL. Everything else depends on this.
+  </div>
+
+  <div class="section-label">Phases</div>
+
+  <!-- Phase 1 -->
+  <div class="phase">
+    <div class="phase-num-bg">1</div>
+    <div class="phase-header">
+      <div class="phase-title-group">
+        <div class="phase-eyebrow">Phase 1</div>
+        <div class="phase-title">Point app at production backend</div>
+      </div>
+      <div class="phase-chips">
+        <span class="chip ok">~1 hour</span>
+        <span class="chip warn">Blocker</span>
+      </div>
+    </div>
+    <ul class="tasks">
+      <li>
+        <span>Update <em>app.json</em> <code>extra.apiUrl</code> from <code>10.0.2.2:3000</code> to your Railway URL</span>
+      </li>
+      <li>
+        <span>Verify all Railway env vars are set: <code>RESEND_API_KEY</code>, <code>ANTHROPIC_API_KEY</code>, <code>AUTH_SECRET</code>, <code>DATABASE_URL</code>, <code>EMAIL_FROM</code></span>
+      </li>
+      <li>
+        <span>Do a full end-to-end test on a physical device against Railway — OTP email, save a link, open AI chat</span>
+      </li>
+      <li>
+        <span>Remove the <em>[DEV] OTP code</em> console.log from <em>lib/mailer.ts</em> before shipping</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Phase 2 -->
+  <div class="phase">
+    <div class="phase-num-bg">2</div>
+    <div class="phase-header">
+      <div class="phase-title-group">
+        <div class="phase-eyebrow">Phase 2</div>
+        <div class="phase-title">Privacy policy &amp; legal</div>
+      </div>
+      <div class="phase-chips">
+        <span class="chip ok">~2 hours</span>
+        <span class="chip warn">Required by Google</span>
+      </div>
+    </div>
+    <ul class="tasks">
+      <li>
+        <span>Write and host a privacy policy — Google requires a public URL. Minimum: what data you collect (email, saved URLs), how it's stored, deletion contact.</span>
+        <span class="note">Simplest: a plain page on your domain or a Notion page made public.</span>
+      </li>
+      <li>
+        <span>Decide on data retention policy — right now there's no account deletion flow</span>
+      </li>
+      <li>
+        <span>Add a <em>Delete account</em> option in the app — Play Store policy requires it for apps with sign-in</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Phase 3 -->
+  <div class="phase">
+    <div class="phase-num-bg">3</div>
+    <div class="phase-header">
+      <div class="phase-title-group">
+        <div class="phase-eyebrow">Phase 3</div>
+        <div class="phase-title">EAS Build — signed production APK/AAB</div>
+      </div>
+      <div class="phase-chips">
+        <span class="chip ok">~half day</span>
+      </div>
+    </div>
+    <ul class="tasks">
+      <li>
+        <span>Create an <em>Expo account</em> at expo.dev and install EAS CLI</span>
+      </li>
+      <li>
+        <span>Run <em>eas build:configure</em> — generates <code>eas.json</code> with internal / preview / production profiles</span>
+      </li>
+      <li>
+        <span>EAS can generate and manage your signing keystore automatically — let it; keep a backup of the keystore file (losing it means you can't update the app)</span>
+      </li>
+      <li>
+        <span>Run the production build targeting Android App Bundle (<code>.aab</code>)</span>
+      </li>
+    </ul>
+    <div class="cmd-block">
+      <div class="cmd"><span class="prompt">$ </span>npm install -g eas-cli</div>
+      <div class="cmd"><span class="prompt">$ </span>eas login</div>
+      <div class="cmd"><span class="prompt">$ </span>eas build:configure</div>
+      <div class="cmd"><span class="prompt">$ </span>eas build <span class="highlight">--platform android --profile production</span></div>
+    </div>
+  </div>
+
+  <!-- Phase 4 -->
+  <div class="phase">
+    <div class="phase-num-bg">4</div>
+    <div class="phase-header">
+      <div class="phase-title-group">
+        <div class="phase-eyebrow">Phase 4</div>
+        <div class="phase-title">Store listing assets</div>
+      </div>
+      <div class="phase-chips">
+        <span class="chip ok">1–2 days</span>
+      </div>
+    </div>
+    <ul class="tasks">
+      <li>
+        <span><em>App icon</em> — 512×512 PNG, no transparency. KeepLink's chain-link mark works well; just export at size.</span>
+      </li>
+      <li>
+        <span><em>Feature graphic</em> — 1024×500 PNG. The banner shown at top of the Play Store listing. A simple branded lockup is fine.</span>
+      </li>
+      <li>
+        <span><em>Screenshots</em> — at least 2, up to 8. Phone (1080×1920 or 9:16 ratio). Capture: login screen, links list with saved items, AI chat, share intent in action.</span>
+      </li>
+      <li>
+        <span><em>Short description</em> — 80 characters max. E.g. "Save links from anywhere. Read later, search, and chat with AI."</span>
+      </li>
+      <li>
+        <span><em>Full description</em> — up to 4,000 chars. Explain the share-sheet workflow; that's the differentiator.</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Phase 5 -->
+  <div class="phase">
+    <div class="phase-num-bg">5</div>
+    <div class="phase-header">
+      <div class="phase-title-group">
+        <div class="phase-eyebrow">Phase 5</div>
+        <div class="phase-title">Google Play Console setup</div>
+      </div>
+      <div class="phase-chips">
+        <span class="chip ok">~1 day</span>
+        <span class="chip warn">$25 fee</span>
+      </div>
+    </div>
+    <ul class="tasks">
+      <li>
+        <span>Pay the one-time $25 Google Play developer registration fee at <em>play.google.com/console</em></span>
+      </li>
+      <li>
+        <span>Create the app entry — package name must match <code>com.keeplink.app</code> exactly and can never be changed</span>
+      </li>
+      <li>
+        <span>Complete the <em>App content</em> questionnaires: content rating, target audience (17+ is simplest), data safety section</span>
+      </li>
+      <li>
+        <span><em>Data safety form</em>: declare that you collect email address and user-generated content (saved URLs); data is not shared with third parties; encryption in transit is used</span>
+      </li>
+      <li>
+        <span>Link your privacy policy URL</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Phase 6 -->
+  <div class="phase">
+    <div class="phase-num-bg">6</div>
+    <div class="phase-header">
+      <div class="phase-title-group">
+        <div class="phase-eyebrow">Phase 6</div>
+        <div class="phase-title">Internal testing → production</div>
+      </div>
+      <div class="phase-chips">
+        <span class="chip ok">~1 week</span>
+      </div>
+    </div>
+    <ul class="tasks">
+      <li>
+        <span>Upload the <code>.aab</code> to the <em>Internal testing</em> track — no Google review, instant availability to up to 100 testers via email invite</span>
+      </li>
+      <li>
+        <span>Test on real Android devices: OTP flow, share sheet, AI chat, link management</span>
+      </li>
+      <li>
+        <span>When satisfied, promote to <em>Production</em> — Google review typically takes 1–7 business days for a first submission</span>
+      </li>
+      <li>
+        <span>Start rollout at 20% of users, monitor for crashes, ramp to 100%</span>
+        <span class="note">Play Console shows ANR and crash data — watch this for the first 48 hours.</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="section-label">After launch</div>
+
+  <div class="phase" style="border-left-color: var(--divider);">
+    <ul class="tasks">
+      <li>
+        <span><em>Updates</em> — run <code>eas build --profile production</code> and upload new <code>.aab</code> to Play Console. Updates go live in hours, not days.</span>
+      </li>
+      <li>
+        <span><em>Crash monitoring</em> — integrate Sentry (<code>@sentry/react-native</code>) before launch; Play Console's built-in reporting is basic</span>
+      </li>
+      <li>
+        <span><em>iOS</em> — same Expo codebase, but requires a paid Apple Developer account ($99/yr) and EAS build for iOS. Submit to App Store Review separately.</span>
+      </li>
+      <li>
+        <span><em>OTA updates</em> — Expo Updates (<code>eas update</code>) lets you push JS-only fixes instantly without a full Play Store submission. Worth setting up for quick patches.</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="section-label">Timeline estimate</div>
+
+  <div class="timeline">
+    <div class="timeline-title">Total effort (working days)</div>
+    <div class="timeline-row">
+      <span class="timeline-phase">Phase 1</span>
+      <span class="timeline-label">Production backend + cleanup</span>
+      <span class="timeline-dur">1 hour</span>
+    </div>
+    <div class="timeline-row">
+      <span class="timeline-phase">Phase 2</span>
+      <span class="timeline-label">Privacy policy + delete account</span>
+      <span class="timeline-dur">2–4 hours</span>
+    </div>
+    <div class="timeline-row">
+      <span class="timeline-phase">Phase 3</span>
+      <span class="timeline-label">EAS Build setup</span>
+      <span class="timeline-dur">2–4 hours</span>
+    </div>
+    <div class="timeline-row">
+      <span class="timeline-phase">Phase 4</span>
+      <span class="timeline-label">Store listing assets</span>
+      <span class="timeline-dur">1–2 days</span>
+    </div>
+    <div class="timeline-row">
+      <span class="timeline-phase">Phase 5</span>
+      <span class="timeline-label">Play Console setup</span>
+      <span class="timeline-dur">2–4 hours</span>
+    </div>
+    <div class="timeline-row">
+      <span class="timeline-phase">Phase 6</span>
+      <span class="timeline-label">Internal testing + fixes</span>
+      <span class="timeline-dur">3–5 days</span>
+    </div>
+    <div class="timeline-row">
+      <span class="timeline-phase"></span>
+      <span class="timeline-label">Google review (waiting)</span>
+      <span class="timeline-dur">1–7 days</span>
+    </div>
+    <div class="total-row">
+      <span>Estimated time to listed on Play Store</span>
+      <span>~2–3 weeks</span>
+    </div>
+  </div>
+
+</div>

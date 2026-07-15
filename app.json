@@ -24,13 +24,26 @@
         {
           "action": "android.intent.action.VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "keeplink" }],
-          "category": ["android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"]
+          "data": [
+            {
+              "scheme": "keeplink"
+            }
+          ],
+          "category": [
+            "android.intent.category.DEFAULT",
+            "android.intent.category.BROWSABLE"
+          ]
         },
         {
           "action": "android.intent.action.SEND",
-          "data": [{ "mimeType": "text/plain" }],
-          "category": ["android.intent.category.DEFAULT"]
+          "data": [
+            {
+              "mimeType": "text/plain"
+            }
+          ],
+          "category": [
+            "android.intent.category.DEFAULT"
+          ]
         }
       ]
     },
@@ -60,7 +73,28 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "http://localhost:3000"
+      "apiUrl": "https://keeplink-production.up.railway.app",
+      "router": {},
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "ShareExtension",
+                  "bundleIdentifier": "com.keeplink.app.share-extension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.keeplink.app"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "ab83e355-0df3-4049-8d28-5b47d645a3ab"
+      }
     }
   }
 }

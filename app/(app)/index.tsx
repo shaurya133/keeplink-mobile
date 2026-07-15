@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { clearToken } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { router } from "expo-router";
 import { FilterTabs } from "@/components/FilterTabs";
@@ -73,11 +72,6 @@ export default function LinksScreen() {
     fetchLinks();
   }
 
-  async function handleSignOut() {
-    await clearToken();
-    router.replace("/(auth)/login");
-  }
-
   function renderEmpty() {
     if (loading) return null;
     return (
@@ -98,8 +92,8 @@ export default function LinksScreen() {
           <TouchableOpacity onPress={() => openChat()}>
             <Text style={styles.askAI}>Ask AI</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleSignOut}>
-            <Text style={styles.signOut}>Sign out</Text>
+          <TouchableOpacity onPress={() => router.push("/(app)/settings")}>
+            <Text style={styles.signOut}>Settings</Text>
           </TouchableOpacity>
         </View>
       </View>

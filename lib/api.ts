@@ -97,4 +97,7 @@ export const api = {
 
   getTags: () =>
     request<import("./types").TagWithCount[]>("/api/tags"),
+
+  deleteAccount: () =>
+    request<{ ok: boolean }>("/api/account", { method: "DELETE" }),
 };
