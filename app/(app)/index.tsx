@@ -207,6 +207,7 @@ export default function LinksScreen() {
             onRefresh={() => fetchLinks()}
             onAskAI={isSavedTab ? undefined : (id, title) => openChat(id, title)}
             userId={userId}
+            isSaved={isSavedTab}
           />
         )}
         ListEmptyComponent={renderEmpty}

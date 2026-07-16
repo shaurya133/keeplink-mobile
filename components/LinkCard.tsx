@@ -20,14 +20,19 @@ interface LinkCardProps {
   onRefresh: () => void;
   onAskAI?: (linkId: string, linkTitle: string) => void;
   userId?: string | null;
+  isSaved?: boolean;
 }
 
-export function LinkCard({ link, onRefresh, onAskAI, userId }: LinkCardProps) {
+export function LinkCard({ link, onRefresh, onAskAI, userId, isSaved }: LinkCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [readerOpen, setReaderOpen] = useState(false);
 
   async function open() {
-    await WebBrowser.openBrowserAsync(link.url);
+    if (isSaved) {
+      setReaderOpen(true);
+    } else {
+      await WebBrowser.openBrowserAsync(link.url);
+    }
   }
 
   async function markRead() {
