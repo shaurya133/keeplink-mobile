@@ -20,6 +20,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.keeplink.app",
+      "versionCode": 2,
       "intentFilters": [
         {
           "action": "android.intent.action.VIEW",
