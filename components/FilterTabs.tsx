@@ -12,9 +12,12 @@ const TABS = [
 interface FilterTabsProps {
   active: string;
   onChange: (status: string) => void;
+  offline?: boolean;
 }
 
-export function FilterTabs({ active, onChange }: FilterTabsProps) {
+export function FilterTabs({ active, onChange, offline }: FilterTabsProps) {
+  const visibleTabs = offline ? TABS.filter((t) => t.value === "saved") : TABS;
+
   return (
     <View style={styles.wrapper}>
       <ScrollView
@@ -22,7 +25,7 @@ export function FilterTabs({ active, onChange }: FilterTabsProps) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.container}
       >
-        {TABS.map((tab) => {
+        {visibleTabs.map((tab) => {
           const isActive = active === tab.value;
           return (
             <TouchableOpacity

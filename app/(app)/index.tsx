@@ -20,7 +20,7 @@ import { ChatModal } from "@/components/ChatModal";
 import { HighlightsModal } from "@/components/HighlightsModal";
 import { ReaderModal } from "@/components/ReaderModal";
 import { colors, spacing } from "@/constants/colors";
-import type { LinkWithTags, CachedLinkMeta } from "@/lib/types";
+import type { LinkWithTags, CachedLinkMeta, LinkMetaForChat } from "@/lib/types";
 
 export default function LinksScreen() {
   const [links, setLinks] = useState<LinkWithTags[]>([]);
@@ -34,6 +34,7 @@ export default function LinksScreen() {
   const [highlightsVisible, setHighlightsVisible] = useState(false);
   const [readerLinkId, setReaderLinkId] = useState<string | null>(null);
   const [readerLinkTitle, setReaderLinkTitle] = useState<string | null>(null);
+  const [readerScrollToHighlight, setReaderScrollToHighlight] = useState<string | undefined>();
   const [userId, setUserIdState] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
 
@@ -47,7 +48,8 @@ export default function LinksScreen() {
     setChatVisible(true);
   }
 
-  function openReaderFromHighlights(linkId: string, linkTitle: string) {
+  function openReaderFromHighlights(linkId: string, linkTitle: string, highlightText?: string) {
+    setReaderScrollToHighlight(highlightText);
     setReaderLinkId(linkId);
     setReaderLinkTitle(linkTitle);
   }
@@ -64,6 +66,7 @@ export default function LinksScreen() {
       setOffline(false);
     } catch {
       setOffline(true);
+      setStatus("saved");
       await fetchSavedLinks();
     } finally {
       setLoading(false);
@@ -173,13 +176,24 @@ export default function LinksScreen() {
         </View>
       )}
 
-      <FilterTabs active={status} onChange={handleStatusChange} />
+      <FilterTabs active={status} onChange={handleStatusChange} offline={offline} />
 
       <ChatModal
         visible={chatVisible}
         onClose={() => setChatVisible(false)}
         linkId={chatLinkId}
         linkTitle={chatLinkTitle}
+        activeTab={status}
+        linksMeta={links.slice(0, 50).map((l): LinkMetaForChat => ({
+          id: l.id,
+          title: l.title,
+          url: l.url,
+          domain: l.domain,
+          status: l.status,
+          addedAt: l.addedAt,
+          readAt: l.readAt,
+          tags: l.tags.map((t) => t.tag.name),
+        }))}
       />
 
       <HighlightsModal
@@ -191,10 +205,11 @@ export default function LinksScreen() {
       {readerLinkId && (
         <ReaderModal
           visible={readerLinkId !== null}
-          onClose={() => { setReaderLinkId(null); setReaderLinkTitle(null); }}
+          onClose={() => { setReaderLinkId(null); setReaderLinkTitle(null); setReaderScrollToHighlight(undefined); }}
           linkId={readerLinkId}
           linkTitle={readerLinkTitle}
           userId={userId}
+          scrollToHighlight={readerScrollToHighlight}
         />
       )}
 

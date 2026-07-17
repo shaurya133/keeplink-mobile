@@ -28,6 +28,17 @@ export interface TagWithCount {
   count: number;
 }
 
+export interface LinkMetaForChat {
+  id: string;
+  title: string | null;
+  url: string;
+  domain: string;
+  status: LinkStatus;
+  addedAt: string;
+  readAt: string | null;
+  tags: string[];
+}
+
 export interface CachedLinkMeta {
   id: string;
   url: string;

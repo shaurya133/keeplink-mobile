@@ -22,7 +22,7 @@ import { colors, spacing } from "@/constants/colors";
 interface HighlightsModalProps {
   visible: boolean;
   onClose: () => void;
-  onOpenReader: (linkId: string, linkTitle: string) => void;
+  onOpenReader: (linkId: string, linkTitle: string, highlightText?: string) => void;
 }
 
 export function HighlightsModal({ visible, onClose, onOpenReader }: HighlightsModalProps) {
@@ -104,10 +104,18 @@ export function HighlightsModal({ visible, onClose, onOpenReader }: HighlightsMo
                 </TouchableOpacity>
 
                 {entry.highlights.map((h) => (
-                  <View key={h.id} style={styles.highlightRow}>
+                  <TouchableOpacity
+                    key={h.id}
+                    style={styles.highlightRow}
+                    onPress={() => {
+                      onClose();
+                      onOpenReader(entry.linkId, entry.title, h.text);
+                    }}
+                    activeOpacity={0.7}
+                  >
                     <View style={styles.highlightBar} />
                     <Text style={styles.highlightText}>{h.text}</Text>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             ))}

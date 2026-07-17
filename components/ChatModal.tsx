@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { getToken } from "@/lib/auth";
 import { colors, spacing } from "@/constants/colors";
+import type { LinkMetaForChat } from "@/lib/types";
 
 const BASE_URL =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
@@ -31,9 +32,11 @@ interface ChatModalProps {
   onClose: () => void;
   linkId?: string;
   linkTitle?: string;
+  activeTab?: string;
+  linksMeta?: LinkMetaForChat[];
 }
 
-export function ChatModal({ visible, onClose, linkId, linkTitle }: ChatModalProps) {
+export function ChatModal({ visible, onClose, linkId, linkTitle, activeTab, linksMeta }: ChatModalProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,11 +44,8 @@ export function ChatModal({ visible, onClose, linkId, linkTitle }: ChatModalProp
   const listRef = useRef<FlatList>(null);
 
   const heading = linkTitle ?? "Ask about your links";
-  const displayTitle = linkTitle && linkTitle.length > 40
-    ? linkTitle.slice(0, 40) + "…"
-    : linkTitle;
-  const placeholder = displayTitle
-    ? `Ask about "${displayTitle}"…`
+  const placeholder = linkTitle
+    ? "Ask about this article…"
     : "What have you saved about…";
 
   function handleClose() {
@@ -83,7 +83,12 @@ export function ChatModal({ visible, onClose, linkId, linkTitle }: ChatModalProp
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ messages: history, ...(linkId ? { linkId } : {}) }),
+        body: JSON.stringify({
+          messages: history,
+          ...(linkId ? { linkId } : {}),
+          ...(activeTab ? { activeTab } : {}),
+          ...(linksMeta?.length ? { linksMeta } : {}),
+        }),
         signal: ctrl.signal,
       });
 
@@ -146,11 +151,16 @@ export function ChatModal({ visible, onClose, linkId, linkTitle }: ChatModalProp
             keyboardShouldPersistTaps="handled"
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
             ListEmptyComponent={
-              <Text style={styles.emptyText}>
-                {linkTitle
-                  ? "Ask me anything about this article."
-                  : "Ask me about your saved links — topics, recommendations, or anything else."}
-              </Text>
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  {linkTitle
+                    ? "Ask me anything about this article."
+                    : "Ask me about your saved links — topics, recommendations, or anything else."}
+                </Text>
+                <Text style={styles.ephemeralNote}>
+                  Chats are temporary and won't be saved when you close this.
+                </Text>
+              </View>
             }
             renderItem={({ item }) => (
               <View style={[styles.bubble, item.role === "user" ? styles.userBubble : styles.assistantBubble]}>
@@ -231,11 +241,22 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     flexGrow: 1,
   },
+  emptyContainer: {
+    alignItems: "center",
+    marginTop: spacing.xxxl,
+    gap: spacing.md,
+  },
   emptyText: {
     color: colors.textMuted,
     fontSize: 15,
     textAlign: "center",
-    marginTop: spacing.xxxl,
+  },
+  ephemeralNote: {
+    color: colors.textMuted,
+    fontSize: 12,
+    textAlign: "center",
+    opacity: 0.6,
+    paddingHorizontal: spacing.xxl,
   },
   bubble: {
     maxWidth: "85%",

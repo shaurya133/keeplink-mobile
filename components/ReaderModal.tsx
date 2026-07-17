@@ -28,11 +28,12 @@ interface ReaderModalProps {
   linkTitle: string | null;
   linkDomain?: string;
   userId: string | null;
+  scrollToHighlight?: string;
 }
 
 type Status = "loading" | "ready" | "no-content" | "error";
 
-export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain, userId }: ReaderModalProps) {
+export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain, userId, scrollToHighlight }: ReaderModalProps) {
   const [paragraphs, setParagraphs] = useState<string[][]>([]);
   const [highlights, setHighlights] = useState<Map<string, string>>(new Map());
   const [status, setStatus] = useState<Status>("loading");
@@ -40,9 +41,11 @@ export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain, u
   const [cached, setCached] = useState(false);
   const [caching, setCaching] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const hasScrolled = useRef(false);
 
   useEffect(() => {
     if (!visible) return;
+    hasScrolled.current = false;
     load();
   }, [visible, linkId]);
 
@@ -202,23 +205,37 @@ export function ReaderModal({ visible, onClose, linkId, linkTitle, linkDomain, u
               style={styles.scroll}
               contentContainerStyle={styles.scrollContent}
             >
-              {paragraphs.map((sentences, pi) => (
-                <Text key={pi} style={styles.para}>
-                  {sentences.map((sentence, si) => {
-                    const isHighlighted = highlights.has(sentence);
-                    return (
-                      <Text
-                        key={si}
-                        onLongPress={() => toggleHighlight(sentence)}
-                        delayLongPress={350}
-                        style={isHighlighted ? styles.sentenceHighlighted : styles.sentence}
-                      >
-                        {sentence}{" "}
-                      </Text>
-                    );
-                  })}
-                </Text>
-              ))}
+              {paragraphs.map((sentences, pi) => {
+                const isTargetParagraph = scrollToHighlight
+                  ? sentences.includes(scrollToHighlight)
+                  : false;
+                return (
+                  <View
+                    key={pi}
+                    onLayout={isTargetParagraph ? (e) => {
+                      if (!hasScrolled.current) {
+                        hasScrolled.current = true;
+                        scrollRef.current?.scrollTo({ y: e.nativeEvent.layout.y, animated: true });
+                      }
+                    } : undefined}
+                  >
+                    <Text style={styles.para}>
+                      {sentences.map((sentence, si) => {
+                        const isHighlighted = highlights.has(sentence);
+                        return (
+                          <Text
+                            key={si}
+                            onLongPress={() => toggleHighlight(sentence)}
+                            style={isHighlighted ? styles.sentenceHighlighted : styles.sentence}
+                          >
+                            {sentence}{" "}
+                          </Text>
+                        );
+                      })}
+                    </Text>
+                  </View>
+                );
+              })}
 
               {highlights.size > 0 && (
                 <View style={styles.highlightsSection}>
